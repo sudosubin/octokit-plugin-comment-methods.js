@@ -1,6 +1,11 @@
 # octokit-plugin-comment-methods.js
 
-> Convenience methods to manage comments
+> Convenience methods to manage comments on GitHub with structured metadata
+> support
+
+An Octokit plugin that provides a unified interface for managing comments on
+commits, gists, issues, and pull request reviews with embedded metadata for
+smart comment management.
 
 ## Usage
 
@@ -20,8 +25,8 @@ module) directly from [esm.sh](https://esm.sh)
 <script type="module">
   import { Octokit } from "https://esm.sh/@octokit/core";
   import {
-  commentMethods,
-  composeCommentMethods,
+    commentMethods,
+    composeCommentMethods,
   } from "https://esm.sh/octokit-plugin-comment-methods";
 </script>
 ```
@@ -47,135 +52,211 @@ import {
 </table>
 
 After loading `octokit-plugin-comment-methods`, you can create and use an
-`Octokit` instance as follows.
+`Octokit` instance as follows:
 
 ```js
 const MyOctokit = Octokit.plugin(commentMethods);
-const octokit = new MyOctokit({ auth: "secret123" });
+const octokit = new MyOctokit({ auth: "your-token-here" });
 ```
 
-## Use Cases
+## How does it work?
 
-### Manage Commit Comments
+This plugin works by embedding structured metadata into GitHub comments using
+markdown comment. Here's how it operates:
 
-You can manage comments on a commit in the repository.
+### Comment Format
 
-```js
+The plugin stores data in comments using a special HTML comment format that
+contains JSON metadata:
+
+```markdown
+<!-- octokit-plugin-comment-methods: {"key": "your-key", "payload": {...}} -->
+Your visible comment text here
+```
+
+### Core Operations
+
+#### Upsert (Update or Insert)
+
+- Searches for an existing comment with the matching `key`
+- If found, updates the existing comment with new content
+- If not found, creates a new comment
+- This prevents duplicate comments and maintains a single comment
+
+#### Get
+
+- Iterates through all comments, and returns the first comment that matches the
+  specified `key`
+- Extracts both the visible text and the structured payload data
+
+### Data Structure
+
+- `key`: A unique identifier for the comment type/purpose
+- `text`: The visible markdown content of the comment
+- `payload`: Optional structured data (any JSON-serializable object)
+
+### Supported Comment Types
+
+The plugin provides managers for different GitHub comment contexts:
+
+- Commit Comments
+- Gist Comments
+- Issue Comments
+- Pull Request Review Comments
+
+Each manager uses the appropriate GitHub API endpoints for that comment type
+while maintaining the same interface and comment format.
+
+## API Reference
+
+### Commit Comments
+
+#### `getCommitComment(options)`
+
+Get a comment by key from a commit.
+
+```typescript
+const { comment, parsed } = await octokit.comments.getCommitComment({
+  owner: string;
+  repo: string;
+  commit_sha: string;
+  key: string;
+});
+```
+
+#### `upsertCommitComment(options)`
+
+Create or update a comment on a commit.
+
+```typescript
 await octokit.comments.upsertCommitComment({
-  owner: "octocat",
-  repo: "hello-world",
-  commit_sha: "921103db8259eb9de72f42db8b939895f5651489",
-  key: "release",
-  text: "New Release Notification (1.0)",
-  payload: { version: "1.0" },
+  owner: string;
+  repo: string;
+  commit_sha: string;
+  key: string;
+  text: string;
+  payload?: Record<string, unknown>;
 });
-
-const { comment: _, parsed } = await octokit.comments.getCommitComment({
-  owner: "octocat",
-  repo: "hello-world",
-  commit_sha: "921103db8259eb9de72f42db8b939895f5651489",
-  key: "release",
-});
-
-if (parsed) {
-  console.log(parsed.key); // release
-  console.log(parsed.payload); // { version: "1.0" }
-  console.log(parsed.text); // New Release Notification (1.0)
-}
 ```
 
-### Manage Gist Comments
+### Gist Comments
 
-You can manage comments on a gist.
+#### `getGistComment(options)`
 
-```js
+Get a comment by key from a gist.
+
+```typescript
+const { comment, parsed } = await octokit.comments.getGistComment({
+  gist_id: string;
+  key: string;
+});
+```
+
+#### `upsertGistComment(options)`
+
+Create or update a comment on a gist.
+
+```typescript
 await octokit.comments.upsertGistComment({
-  gist_id: "gist123",
-  key: "release",
-  text: "New Release Notification (1.0)",
-  payload: { version: "1.0" },
+  gist_id: string;
+  key: string;
+  text: string;
+  payload?: Record<string, unknown>;
 });
-
-const { comment: _, parsed } = await octokit.comments.getGistComment({
-  gist_id: "gist123",
-  key: "release",
-});
-
-if (parsed) {
-  console.log(parsed.key); // release
-  console.log(parsed.payload); // { version: "1.0" }
-  console.log(parsed.text); // New Release Notification (1.0)
-}
 ```
 
-### Manage Issue Comments
+### Issue Comments
 
-You can manage comments on a specific issue or pull request in the repository.
+#### `getIssueComment(options)`
+
+Get a comment by key from an issue or pull request.
+
+```typescript
+const { comment, parsed } = await octokit.comments.getIssueComment({
+  owner: string;
+  repo: string;
+  issue_number: number;
+  key: string;
+});
+```
+
+#### `upsertIssueComment(options)`
+
+Create or update a comment on an issue or pull request.
+
+```typescript
+await octokit.comments.upsertIssueComment({
+  owner: string;
+  repo: string;
+  issue_number: number;
+  key: string;
+  text: string;
+  payload?: Record<string, unknown>;
+});
+```
+
+### Pull Request Review Comments
+
+#### `getPullRequestReviewComment(options)`
+
+Get a review comment by key from a pull request.
+
+```typescript
+const { comment, parsed } = await octokit.comments.getPullRequestReviewComment({
+  owner: string;
+  repo: string;
+  pull_number: number;
+  key: string;
+});
+```
+
+#### `upsertPullRequestReviewComment(options)`
+
+Create or update a review comment on a pull request.
+
+```typescript
+await octokit.comments.upsertPullRequestReviewComment({
+  owner: string;
+  repo: string;
+  pull_number: number;
+  key: string;
+  text: string;
+  payload?: Record<string, unknown>;
+});
+```
+
+## Examples
+
+### Quick Start
 
 ```js
 await octokit.comments.upsertIssueComment({
   owner: "octocat",
   repo: "hello-world",
   issue_number: 1,
-  key: "release",
-  text: "New Release Notification (1.0)",
-  payload: { version: "1.0" },
+  key: "build-status",
+  text: "✅ Build passed successfully!",
+  payload: { id: "abc123", status: "SUCCESS", duration: 180 },
 });
 
-const { comment: _, parsed } = await octokit.comments.getIssueComment({
+const { comment, parsed } = await octokit.comments.getIssueComment({
   owner: "octocat",
   repo: "hello-world",
   issue_number: 1,
-  key: "release",
+  key: "build-status",
 });
 
 if (parsed) {
-  console.log(parsed.key); // release
-  console.log(parsed.payload); // { version: "1.0" }
-  console.log(parsed.text); // New Release Notification (1.0)
+  console.log(`Build ${parsed.payload.id}: ${parsed.payload.status}`);
 }
 ```
 
-### Manage Pull Request Review Comments
+### Advanced: Deployment History Tracking
 
-You can manage review comments on a specific pull request in the repository.
+Build a persistent deployment log by appending new deployments to existing
+comment data:
 
-```js
-await octokit.comments.upsertPullRequestReviewComment({
-  owner: "octocat",
-  repo: "hello-world",
-  pull_number: 1,
-  key: "release",
-  text: "New Release Notification (1.0)",
-  payload: { version: "1.0" },
-});
-
-const { comment: _, parsed } =
-  await octokit.comments.getPullRequestReviewComment({
-    owner: "octocat",
-    repo: "hello-world",
-    pull_number: 1,
-    key: "release",
-  });
-
-if (parsed) {
-  console.log(parsed.key); // release
-  console.log(parsed.payload); // { version: "1.0" }
-  console.log(parsed.text); // New Release Notification (1.0)
-}
-```
-
-### Complex Usage
-
-Here is an actual use case.
-
-You may want to deploy every time there is a change in Pull Request and continue
-to leave a record of the deployment in the comments. In that case, if there is
-an existing comment, you can append the deployment record using the payload of
-that comment and update the existing comment instead of creating a new comment,
-as shown below.
-
-```js
+```typescript
 interface Deployment {
   sha: string;
   time: string;
@@ -190,7 +271,7 @@ const { parsed } = await octokit.comments.getIssueComment({
 });
 
 const deployments = [
-  { sha: "0001", time: "1970-01-01 00:01:15", result: "SUCCESS" },
+  { sha: process.env.GIT_SHA, time: new Date().toISOString() },
   ...((parsed?.payload?.deployments || []) as Deployment[]),
 ];
 
@@ -198,21 +279,23 @@ const deployments = [
  * The generated comment looks like this:
  * <!-- octokit-plugin-comment-methods: {"key": "deployment", "payload": {
  *   "deployments": [
- *     {"sha": "0001", "time": "1970-01-01 00:01:15", "result": "SUCCESS"},
- *     {"sha": "0000", "time": "1970-01-01 00:01:00", "result": "FAILURE"}
+ *     {"sha": "0001", "time": "1970-01-01T00:01:15.000Z"},
+ *     {"sha": "0000", "time": "1970-01-01T00:01:00.000Z"}
  *   ]
  * }} -->
- * - `0001`: `1970-01-01 00:01:15` (`SUCCESS`)
- * - `0000`: `1970-01-01 00:01:00` (`FAILURE`)
+ * #### Deployment History
+ *
+ * - `0001`: Deployed at `1970-01-01T00:01:15.000Z`
+ * - `0000`: Deployed at `1970-01-01T00:01:00.000Z`
  */
 octokit.comments.upsertIssueComment({
   owner: "octocat",
   repo: "hello-world",
   issue_number: 1,
   key: "deployment",
-  text: deployments
-    .map(({ sha, time, result }) => `- \`${sha}\`: \`${time}\` (\`${result}\`)`)
-    .join("\n"),
+  text: `#### Deployment History\n\n${deployments
+    .map(({ sha, time }) => `- \`${sha}\`: Deployed at \`${time}\``)
+    .join("\n")}`,
   payload: { deployments },
 });
 ```

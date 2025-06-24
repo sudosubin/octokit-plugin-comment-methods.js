@@ -1,7 +1,7 @@
 {
   "name": "octokit-plugin-comment-methods",
   "version": "0.0.0",
-  "description": "Convenience methods to manage comments",
+  "description": "Convenience methods to manage comments on GitHub with structured metadata support",
   "keywords": [
     "octokit-plugin"
   ],
