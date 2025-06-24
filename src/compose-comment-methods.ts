@@ -65,11 +65,13 @@ export const composeCommentMethods = (octokit: Octokit) => {
       getCommitComment: commit.get.bind(commit),
       getGistComment: gist.get.bind(gist),
       getIssueComment: issue.get.bind(issue),
-      getPullRequestReview: pullRequestReview.get.bind(pullRequestReview),
+      getPullRequestReviewComment:
+        pullRequestReview.get.bind(pullRequestReview),
       upsertCommitComment: commit.upsert.bind(commit),
       upsertGistComment: gist.upsert.bind(gist),
       upsertIssueComment: issue.upsert.bind(issue),
-      upsertPullRequestReview: pullRequestReview.upsert.bind(pullRequestReview),
+      upsertPullRequestReviewComment:
+        pullRequestReview.upsert.bind(pullRequestReview),
     },
   };
 };

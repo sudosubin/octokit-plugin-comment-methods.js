@@ -92,11 +92,13 @@ describe("composeCommentMethods", () => {
     expect(result.comments.getCommitComment).toBeTypeOf("function");
     expect(result.comments.getGistComment).toBeTypeOf("function");
     expect(result.comments.getIssueComment).toBeTypeOf("function");
-    expect(result.comments.getPullRequestReview).toBeTypeOf("function");
+    expect(result.comments.getPullRequestReviewComment).toBeTypeOf("function");
     expect(result.comments.upsertCommitComment).toBeTypeOf("function");
     expect(result.comments.upsertGistComment).toBeTypeOf("function");
     expect(result.comments.upsertIssueComment).toBeTypeOf("function");
-    expect(result.comments.upsertPullRequestReview).toBeTypeOf("function");
+    expect(result.comments.upsertPullRequestReviewComment).toBeTypeOf(
+      "function",
+    );
   });
 
   it("should create managers for all comment types", () => {
