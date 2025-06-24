@@ -1,0 +1,73 @@
+{
+  "name": "octokit-plugin-comment-methods",
+  "version": "0.0.0",
+  "description": "Convenience methods to manage comments",
+  "keywords": [
+    "octokit-plugin"
+  ],
+  "repository": "https://github.com/sudosubin/octokit-plugin-comment-methods.js",
+  "license": "MIT",
+  "author": "Subin Kim <sudosubin@gmail.com> (https://github.com/sudosubin)",
+  "type": "commonjs",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist/*"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "check-types": "tsc --noEmit",
+    "lint": "biome check .",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest watch"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "pnpm exec lint-staged"
+  },
+  "lint-staged": {
+    "*.{js,json,ts}": "biome check --write --unsafe --no-errors-on-unmatched --files-ignore-unknown=true",
+    "package.json": "sort-package-json"
+  },
+  "dependencies": {
+    "@octokit/request-error": "^7.0.0",
+    "@octokit/types": "^14.0.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.0.5",
+    "@octokit/tsconfig": "^4.0.0",
+    "@types/node": "^20",
+    "@vitest/coverage-v8": "^3.2.4",
+    "lint-staged": "^16.1.2",
+    "simple-git-hooks": "^2.13.0",
+    "sort-package-json": "^3.3.0",
+    "tsdown": "^0.12.8",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  },
+  "peerDependencies": {
+    "@octokit/core": ">=7",
+    "@octokit/plugin-paginate-rest": ">=13"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "import": "./dist/index.mjs"
+}
