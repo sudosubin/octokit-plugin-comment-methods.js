@@ -46,7 +46,7 @@
     "package.json": "sort-package-json"
   },
   "dependencies": {
-    "@octokit/request-error": "^7.0.0",
+    "@octokit/plugin-paginate-rest": "^13.0.0",
     "@octokit/types": "^14.0.0"
   },
   "devDependencies": {
@@ -64,8 +64,7 @@
     "vitest": "^3.2.4"
   },
   "peerDependencies": {
-    "@octokit/core": ">=7",
-    "@octokit/plugin-paginate-rest": ">=13"
+    "@octokit/core": ">=7"
   },
   "engines": {
     "node": ">=20"
