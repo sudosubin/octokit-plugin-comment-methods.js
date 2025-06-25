@@ -52,3 +52,10 @@ export type EndpointWithBodyAndCommentIdParameter = {
       : never
     : never;
 }[keyof Endpoints];
+
+export type ComposeGetOptions<E extends PaginatingEndpointWithCommentResponse> =
+  { delimiter?: string } & Parameters<OctokitCommentManager<E>["get"]>[0];
+
+export type ComposeUpsertOptions<
+  E extends PaginatingEndpointWithCommentResponse,
+> = { delimiter?: string } & Parameters<OctokitCommentManager<E>["upsert"]>[0];

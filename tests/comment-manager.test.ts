@@ -1,28 +1,11 @@
 import type { Octokit } from "@octokit/core";
-import { composePaginateRest } from "@octokit/plugin-paginate-rest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { OctokitCommentManager } from "@/comment-manager";
+import { OctokitCommentManager } from "@/index";
+import { createOctokit } from "./utils";
 
 vi.mock("@octokit/plugin-paginate-rest", () => ({
   composePaginateRest: { iterator: vi.fn() },
 }));
-
-const createOctokit = () => {
-  const octokit = {
-    paginate: vi.fn(),
-    request: vi.fn().mockImplementation(async (route: string) => {
-      const method = route.split(" ", 1)[0];
-      if (method === "GET") return { data: [] };
-      if (method === "POST") return { data: { id: 1, body: "created" } };
-      if (method === "PATCH") return { data: { id: 1, body: "updated" } };
-      return { data: null };
-    }),
-  };
-  return octokit as unknown as Octokit & {
-    paginate: ReturnType<typeof vi.fn>;
-    request: ReturnType<typeof vi.fn>;
-  };
-};
 
 const createOctokitCommentManager = ({
   delimiter,
@@ -30,29 +13,16 @@ const createOctokitCommentManager = ({
   request,
 }: {
   delimiter?: string;
-  paginate?: (paginate: ReturnType<typeof vi.fn>) => void;
-  request?: (request: ReturnType<typeof vi.fn>) => void;
+  paginate?: (<T extends ReturnType<typeof vi.fn>>(func: T) => T) | undefined;
+  request?: (<T extends ReturnType<typeof vi.fn>>(func: T) => T) | undefined;
 } = {}) => {
-  const octokit = createOctokit();
-  if (paginate) {
-    paginate(octokit.paginate);
-  }
-  if (request) {
-    request(octokit.request);
-  }
+  const octokit = createOctokit({ paginate, request });
 
   const routes = {
     paginate: "GET /repos/{owner}/{repo}/issues/{issue_number}/comments",
     create: "POST /repos/{owner}/{repo}/issues/{issue_number}/comments",
     update: "PATCH /repos/{owner}/{repo}/issues/comments/{comment_id}",
   } as const;
-
-  vi.mocked(composePaginateRest.iterator).mockImplementation(() => ({
-    async *[Symbol.asyncIterator]() {
-      const data = await octokit.paginate(routes.paginate as string, {});
-      yield { data, headers: {}, url: "", status: 200 };
-    },
-  }));
 
   const manager = new OctokitCommentManager({ delimiter, octokit, routes });
   return manager as OctokitCommentManager & {
@@ -209,8 +179,8 @@ describe("OctokitCommentManager", () => {
       body: "test",
     };
     const manager = createOctokitCommentManager({
-      request: (request) =>
-        request.mockResolvedValue({ data: { id: 1, body: "test" } }),
+      request: (func) =>
+        func.mockResolvedValue({ data: { id: 1, body: "test" } }),
     });
 
     // when
@@ -233,8 +203,8 @@ describe("OctokitCommentManager", () => {
       body: "updated",
     };
     const manager = createOctokitCommentManager({
-      request: (request) =>
-        request.mockResolvedValue({ data: { id: 1, body: "updated" } }),
+      request: (func) =>
+        func.mockResolvedValue({ data: { id: 1, body: "updated" } }),
     });
 
     // when
@@ -258,9 +228,9 @@ describe("OctokitCommentManager", () => {
       issue_number: 1,
     };
     const manager = createOctokitCommentManager({
-      paginate: (paginate) => paginate.mockResolvedValue([]),
-      request: (request) =>
-        request.mockResolvedValue({ data: { id: 1, body: "test" } }),
+      paginate: (func) => func.mockResolvedValue([]),
+      request: (func) =>
+        func.mockResolvedValue({ data: { id: 1, body: "test" } }),
     });
 
     // when
@@ -289,8 +259,8 @@ describe("OctokitCommentManager", () => {
       issue_number: 1,
     };
     const manager = createOctokitCommentManager({
-      paginate: (paginate) =>
-        paginate.mockResolvedValue([
+      paginate: (func) =>
+        func.mockResolvedValue([
           {
             id: 123,
             body: `<!-- octokit-plugin-comment-methods: {"key":"test-key"} -->\nHello world!`,
@@ -299,8 +269,8 @@ describe("OctokitCommentManager", () => {
             updated_at: "2023-01-01T00:00:00Z",
           },
         ]),
-      request: (request) =>
-        request.mockResolvedValue({ data: { id: 1, body: "updated" } }),
+      request: (func) =>
+        func.mockResolvedValue({ data: { id: 1, body: "updated" } }),
     });
 
     // when
@@ -330,9 +300,9 @@ describe("OctokitCommentManager", () => {
       issue_number: 1,
     };
     const manager = createOctokitCommentManager({
-      paginate: (paginate) => paginate.mockResolvedValue([]),
-      request: (request) =>
-        request.mockResolvedValue({ data: { id: 1, body: "test" } }),
+      paginate: (func) => func.mockResolvedValue([]),
+      request: (func) =>
+        func.mockResolvedValue({ data: { id: 1, body: "test" } }),
     });
 
     // when
@@ -358,7 +328,7 @@ describe("OctokitCommentManager", () => {
     };
     const error = new Error("Failed to get comments");
     const manager = createOctokitCommentManager({
-      paginate: (paginate) => paginate.mockRejectedValue(error),
+      paginate: (func) => func.mockRejectedValue(error),
     });
 
     // when & then

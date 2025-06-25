@@ -24,10 +24,7 @@ module) directly from [esm.sh](https://esm.sh)
 ```html
 <script type="module">
   import { Octokit } from "https://esm.sh/@octokit/core";
-  import {
-    commentMethods,
-    composeCommentMethods,
-  } from "https://esm.sh/octokit-plugin-comment-methods";
+  import { commentMethods } from "https://esm.sh/octokit-plugin-comment-methods";
 </script>
 ```
 
@@ -41,10 +38,7 @@ Install with `npm install octokit-plugin-comment-methods`. Optionally replace
 
 ```js
 import { Octokit } from "@octokit/core";
-import {
-  commentMethods,
-  composeCommentMethods,
-} from "octokit-plugin-comment-methods";
+import { commentMethods } from "octokit-plugin-comment-methods";
 ```
 
 </td></tr>
@@ -249,6 +243,34 @@ const { comment, parsed } = await octokit.comments.getIssueComment({
 if (parsed) {
   console.log(`Build ${parsed.payload.id}: ${parsed.payload.status}`);
 }
+```
+
+### Advanced: Direct Usage with Compose Functions
+
+For advanced use cases or when you don't want to use the plugin pattern, you can
+use the compose functions directly:
+
+```js
+import {
+  composeGetIssueComment,
+  composeUpsertIssueComment,
+} from "octokit-plugin-comment-methods";
+
+await composeUpsertIssueComment(octokit, {
+  owner: "octocat",
+  repo: "hello-world",
+  issue_number: 1,
+  key: "build-status",
+  text: "✅ Build passed successfully!",
+  payload: { id: "abc123", status: "SUCCESS", duration: 180 },
+});
+
+const { comment, parsed } = await composeGetIssueComment(octokit, {
+  owner: "octocat",
+  repo: "hello-world",
+  issue_number: 1,
+  key: "build-status",
+});
 ```
 
 ### Advanced: Deployment History Tracking
